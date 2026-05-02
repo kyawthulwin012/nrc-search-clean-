@@ -1,50 +1,20 @@
-name: Build Android APK
+- name: Install Android SDK (FIX LICENSE + AIDL)
+  run: |
+    export ANDROID_HOME=$HOME/android-sdk
+    mkdir -p $ANDROID_HOME/cmdline-tools
 
-on:
-  push:
-  workflow_dispatch:
+    cd $HOME
+    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+    unzip commandlinetools-linux-*.zip -d $ANDROID_HOME/cmdline-tools
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
 
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y openjdk-17-jdk wget unzip git
-        pip install --upgrade pip
-        pip install buildozer cython
+    yes | sdkmanager --licenses || true
+    yes | sdkmanager --licenses || true
+    yes | sdkmanager --licenses || true
 
-    - name: Install Android SDK (FIX AIDL)
-      run: |
-        export ANDROID_HOME=$HOME/android-sdk
-        mkdir -p $ANDROID_HOME/cmdline-tools
-
-        cd $HOME
-        wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-        unzip commandlinetools-linux-*.zip -d $ANDROID_HOME/cmdline-tools
-
-        mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-
-        yes | sdkmanager --licenses
-
-        sdkmanager "platform-tools" \
-                   "platforms;android-33" \
-                   "build-tools;33.0.2"
-
-    - name: Build APK
-      run: |
-        buildozer init || true
-        buildozer -v android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: apk
-        path: bin/*.apk
+    sdkmanager "platform-tools" \
+               "platforms;android-33" \
+               "build-tools;33.0.2"
